@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoCacheApp</title>
+
+  <!-- OUR CUSTOM SCRIPTS -->
+  <script type="text/javascript" src="scripts/scripts.js"></script>
+
+  <!--  BOOTSTRAP -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+    crossorigin="anonymous" />
+  <!-- GOOGLE MAPS SCRIPT API -->
+  <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB0VYHOsvdwrOeQrc3oEaoqkckDs9TVXkg" type="text/javascript"></script> -->
+
+  <!-- Our stylesheet last to trump above CSS-->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="d-flex justify-content-center mt-5">
+    <h3>NEARBY GEOCACHES</h3>
+  </div>
+  <div id="map" class="container mt-2"></div>
+  <div class="d-flex justify-content-center mt-2">
+    <button id="btn_GetGeoCaches" class="">GET NEARBY GEOCACHES</button>
+  </div>
+  <div id="cont_UserFunctions" class="d-flex justify-content-center mt-2">
+    <h5 id="txt_WelcomeMessage"></h5>
+  </div>
+  <div id="cont_MarkerDetails" class="container justify-content-center mt-2 MarkerDetails">
+    <form class="form-inline">
+      <div class="container">
+        <fieldset class="myform-border">
+          <legend class="myform-border">GEOCACHE DETAILS:</legend>
+          <div class="container form-group justify-content-center mt-2 mr-3 form-inline">
+            <label>ITEM:</label>
+            <input class="form-control" type="text" id="form_item" value="" readonly />
+          </div>
+          <div class="container form-group justify-content-center mt-2 mr-3 form-inline">
+            <label>DIFFICULTY:</label>
+            <input class="form-control" type="text" id="form_difficulty" value="" readonly />
+          </div>
+          <div class="container form-group justify-content-center mt-2 mr-3 form-inline">
+            <label>POSITION:</label>
+            <input class="form-control" type="text" id="form_position" value="" readonly />
+            <input class="form-control" type="text" id="form_cacheID" readonly />
+          </div>
+          <div class="container form-group justify-content-center mt-2 mr-3 form-inline">
+            <button id="btn_FoundItem" class="btn btn-outline-success mt-3 mr-2">I FOUND THIS ITEM!!</button>
+            <button id="btn_CloseDetails" class="btn btn-outline-danger mt-3 ml-2">FIND ANOTHER CACHE</button>
+          </div>
+        </fieldset>
+      </div>
+    </form>
+  </div>
+  <div id="DEBUG" class="container justify-content-center mt-2"></div>
+
+  <!-- These are required for bootstrap JS/CSS dependencies-->
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+  <!-- These are required for bootstrap JS/CSS dependencies-->
+
+  <script>
+    // Note: This example requires that you consent to location sharing when
+    // prompted by your browser. If you see the error "The Geolocation service
+    // failed.", it means you probably did not give permission for the browser to
+    // locate you.
+    let map, infoWindow;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: -34.397, lng: 150.644 },
+        zoom: 10,
+      });
+      infoWindow = new google.maps.InfoWindow();
+
+      // Try HTML5 geolocation.
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            var pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+
+            // infoWindow.setPosition(pos);
+            // infoWindow.setContent("Location found.");
+            // infoWindow.open(map);
+            map.setCenter(pos);
+            drawGMapMarkers(pos, -1, map);
+          },
+          function () {
+            handleLocationError(true, infoWindow, map.getCenter());
+          }
+        );
+      } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, infoWindow, map.getCenter());
+      }
+
+      //userresponse is made - cookies are live... build page data
+      // alert(document.cookie);
+      let name = getCookie("userName");
+      document.getElementById("txt_WelcomeMessage").innerText = "WELCOME BACK " + name;
+    }
+
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+      infoWindow.setPosition(pos);
+      infoWindow.setContent(browserHasGeolocation ? "Error: The Geolocation service failed." : "Error: Your browser doesn't support geolocation.");
+      infoWindow.open(map);
+    }
+
+    //Var for the retrieved caches - used for client side filtering when
+    //a marker is clicked to lookup & retrieve without having to go back
+    //through a dbase call.
+    let Caches;
+    function call_GetAllCaches() {
+      let xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.status == 200) {
+          //alert(this.response);
+          Caches = JSON.parse(this.response);
+          drawCaches(Caches);
+        }
+      };
+      xhttp.open("GET", "readandwrite", true);
+      xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhttp.send();
+    }
+
+    //This function takes the response array and prepares to draws markers on the googlemap
+    //for places retrieved from GetAllCaches()
+    function drawCaches(responseArray) {
+      responseArray.forEach(function (e, i) {
+        var pos = {
+          lat: e.lat,
+          lng: e.lng,
+        };
+        drawGMapMarkers(pos, i, map);
+      });
+    }
+
+    //This funciton takes and draws a single marker on the map - binding CLICK event to pull up data
+    function drawGMapMarkers(pos, index, inMap) {
+      //ICONS
+      var iconBase = "https://developers.google.com/maps/documentation/javascript/examples/full/images/";
+      var icons = {
+        parking: {
+          icon: iconBase + "parking_lot_maps.png",
+        },
+        library: {
+          icon: iconBase + "library_maps.png",
+        },
+        info: {
+          icon: iconBase + "info-i_maps.png",
+        },
+      };
+
+      if (index >= 0) {
+        var marker = new google.maps.Marker({
+          position: pos,
+          // icon: icons.icon,
+          map: inMap,
+        });
+
+        marker.addListener("click", function () {
+          map.setZoom(15);
+          map.setCenter(marker.getPosition());
+          showMarkerDetails(index);
+        });
+      }
+    }
+
+    //Shows marker details from marker being clicked in map
+    //sets a global var to be used in other functions
+    let CacheIndexSelected = -1;
+    function showMarkerDetails(index) {
+      CacheIndexSelected = index;
+      const thisMarker = Caches[index];
+      document.getElementById("form_item").value = thisMarker.itemID.name;
+      document.getElementById("form_difficulty").value = thisMarker.difficultyLevel.difficultyLevel;
+      document.getElementById("form_position").value = "LAT: " + thisMarker.lat + " LONG: " + thisMarker.lng;
+      document.getElementById("form_cacheID").value = thisMarker.geoCasheID;
+      document.getElementById("cont_MarkerDetails").style.display = "block";
+      //alert(itemTxt);
+    }
+
+    function call_getMarkerDetails(position) {
+      let xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.status == 200) {
+          //alert(this.response);
+          const x = JSON.parse(this.response);
+          drawCaches(x);
+        }
+      };
+      xhttp.open("GET", "ThatTeam_GeoCache/getcachebylocation", true);
+      xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhttp.send();
+    }
+
+    //bind REFRESH button functionality
+    document.getElementById("btn_GetGeoCaches").addEventListener("click", function (e) {
+      e.preventDefault();
+      call_GetAllCaches();
+    });
+
+    //I FOUND ITEM clicked - produce popup window to exchange items into geocache
+    document.getElementById("btn_FoundItem").addEventListener("click", function (e) {
+      e.preventDefault();
+      const imgurl = document.getElementById("form_item").value;
+      popupCenter({ url: "huntcache.html?imgurl=" + Caches[CacheIndexSelected].itemID.image + "&cacheid=" + Caches[CacheIndexSelected].geoCasheID, title: "FOUND GEOCACHE", w: 800, h: 600 });
+    });
+
+    //FindAnotherCache button clicked - rezoom to original centered @ your destination
+    document.getElementById("btn_CloseDetails").addEventListener("click", function (e) {
+      e.preventDefault();
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          map.setCenter(pos);
+          map.setZoom(10);
+          document.getElementById("cont_MarkerDetails").style.display = "none";
+        });
+      }
+    });
+
+      // $(document).ready(function () {
+      //   alert("doc ready");
+      // });
+  </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB0VYHOsvdwrOeQrc3oEaoqkckDs9TVXkg&callback=initMap"></script>
+</body>
+
+</html>

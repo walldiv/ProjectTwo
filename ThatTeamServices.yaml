@@ -1,0 +1,78 @@
+###################    DEPLOYMENTS   ########################
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: users-deployment
+  labels:
+    app: users-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ThatTeam_Users
+  template:
+    metadata:
+      labels:
+        app: ThatTeam_Users
+    spec:
+      containers:
+        - name: users
+          image: thatteamrulez/users
+          ports:
+            - containerPort: 8080 #due to containers being isolated - all these can be 8080 and not error out.
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geocache-deployment
+  labels:
+    app: geo-cache-dep
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ThatTeam_GeoCache
+  template:
+    metadata:
+      labels:
+        app: ThatTeam_GeoCache
+    spec:
+      containers:
+        - name: geocache
+          image: thatteamrulez/geocache
+          ports:
+            - containerPort: 8080 #due to containers being isolated - all these can be 8080 and not error out.
+
+###################    SERVICES   ########################
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: users-service
+spec:
+  type: NodePort
+  selector:
+    app: ThatTeam_Users
+  ports:
+    - port: 3050 # used by other pods
+      targetPort: 8080 # port exposed on the container  NEEDS TO BE HERE.   Also due to containers being isolated - all these can be 8080 and not error out.
+      protocol: TCP
+      nodePort: 31515 # used to access from the outside
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: geocache-service
+spec:
+  type: NodePort
+  selector:
+    app: ThatTeam_GeoCache
+  ports:
+    - port: 3051 # used by other pods
+      targetPort: 8080 # port exposed on the container  NEEDS TO BE HERE.   Also due to containers being isolated - all these can be 8080 and not error out.
+      protocol: TCP
+      nodePort: 31516 # used to access from the outside
+

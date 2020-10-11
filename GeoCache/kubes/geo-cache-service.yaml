@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: geo-cache-service
+spec:
+  type: NodePort
+  selector:
+    app: geocacheapi
+  ports:
+    - port: 3050 # used by other pods
+      protocol: TCP
+      targetPort: 8080 # port exposed on the container
+      nodePort: 31515 # used to access from the outside

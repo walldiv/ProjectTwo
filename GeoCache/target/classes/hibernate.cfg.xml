@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+
+        <mapping class="com.ex.model.GeoCashe" />
+        <mapping class="com.ex.model.GeoCasheHistorys" />
+        <mapping class="com.ex.model.DifficultyLevel" />
+        <mapping class="com.ex.model.Item" />
+
+    </session-factory>
+</hibernate-configuration>

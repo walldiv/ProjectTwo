@@ -1,0 +1,1 @@
+docker build --build-arg PG_DB_NAME=%POSTGRES_DATABASE_NAME% --build-arg PG_PASSWORD=%POSTGRES_PASSWORD% --build-arg PG_PORT=%POSTGRES_PORT%  --build-arg PG_URL=%POSTGRES_URL% --build-arg PG_USERNAME=%POSTGRES_USERNAME% -t thatTeamUsers:latest .

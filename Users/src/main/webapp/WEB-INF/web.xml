@@ -1,0 +1,40 @@
+<!--<!DOCTYPE web-app PUBLIC-->
+<!-- "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"-->
+<!-- "http://java.sun.com/dtd/web-app_2_3.dtd" >-->
+
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+		 http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+  <!-- In this file we will declare and map servlets/filters to names and url patterns -->
+
+  <servlet>
+    <servlet-name>userlogin</servlet-name>
+    <servlet-class>com.ex.servlets.UserLogin</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>userlogin</servlet-name>
+    <url-pattern>/userlogin</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>userlogout</servlet-name>
+    <servlet-class>com.ex.servlets.UserLogout</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>userlogout</servlet-name>
+    <url-pattern>/userlogout</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>displayuser</servlet-name>
+    <servlet-class>com.ex.servlets.DisplayUser</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>displayuser</servlet-name>
+    <url-pattern>/displayuser</url-pattern>
+  </servlet-mapping>
+
+
+</web-app>

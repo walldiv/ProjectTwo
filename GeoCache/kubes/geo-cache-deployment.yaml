@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geo-cache-deployment
+  labels:
+    app: geo-cache-dep
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ThatTeam_GeoCache
+  template:
+    metadata:
+      labels:
+        app: ThatTeam_GeoCache
+    spec:
+      containers:
+        - name: webapp
+          image: jsev/geocache
+          ports:
+            - containerPort: 8080

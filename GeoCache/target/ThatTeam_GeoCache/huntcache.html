@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>I FOUND THIS CACHE!!!</title>
+
+  <!-- OUR CUSTOM SCRIPTS -->
+  <script type="text/javascript" src="ThatTeam_GeoCache/scripts/scripts.js"></script>
+
+  <!--  BOOTSTRAP -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+    crossorigin="anonymous" />
+
+  <!-- AWS SDK -->
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.682.0.min.js"></script>
+
+  <!-- Our stylesheet last to trump above CSS-->
+  <link rel="stylesheet" href="ThatTeam_GeoCache/styles.css" />
+</head>
+
+<body>
+  <div id="cont_Review" class="container">
+    <div class="justify-content-center text-center">
+      <h3>CURRENT ITEM IN GEOCACHE:</h3>
+      <div id="cont_s3Img"></div>
+      <a href="" onclick="closeWindow();" class="small">Is this not the same item in geocache? CLICK HERE</a>
+      <div id="cont_InfoForm" class="justify-content-center mt-2">
+        <form id="GeoCacheReview" class="">
+          <div class="text-center font-weight-bolder font-italic" id="txtBox">RATE THIS GEOCACHE!</div>
+          <input type="range" class="ratingSlider" id="rating" min="0" max="5" />
+          <span class="font-weight-bold text-primary ml-2" id="valueSpan"></span>
+          <div class="form-group">
+            <label for="ratingComment">LEAVE A COMMENT:</label><br />
+            <textarea class="ratingTextArea" id="ratingComment" rows="3"></textarea>
+          </div>
+          <div class="justify-content-center form-group">
+            <button id="btn_SubmitReview" class="btn btn-outline-success mt-3 mr-2">SUBMIT REVIEW</button>
+            <button id="btn_Cancel1" class="btn btn-outline-danger mt-3 ml-2">CANCEL</button>
+          </div>
+        </form>
+      </div>
+      <div id="cont_Buttons" class="justify-content-center form-group">
+        <button id="btn_BeginSwap" class="btn btn-outline-success mt-3 mr-2">BEGIN SWAPPING ITEM</button>
+        <button id="btn_Cancel2" class="btn btn-outline-danger mt-3 ml-2">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cont_NewItem" class="container">
+    <div class="justify-content-center text-center">
+      <h3>NEW ITEM WIZARD</h3>
+      <form id="GeoCacheNewItem" class="">
+        <fieldset class="myform-border">
+          <legend class="myform-border">Item Details:</legend>
+          <div class="form-group form-row">
+            <label for="newItem_Name">ITEM NAME:</label>
+            <input type="text" class="form-control" name="newItem_Name" placeholder="Example: Cigarette lighter" required />
+          </div>
+          <div class="form-group form-row">
+            <label for="newItem_Description">ITEM DESCRIPTION:</label>
+          </div>
+          <div class="form-group form-row">
+            <textarea class="ratingTextArea" id="newItem_Description" rows="3" placeholder="Some simple description of this item"></textarea>
+          </div>
+          <div class="form-group form-row">
+            <label for="newItem_ImgUrl">ITEM IMAGE (Image files only!):</label>
+            <input type="file" class="form-control" id="newItem_ImgUrl" name="newItem_ImgUrl" accept="image/*" />
+          </div>
+          <div class="form-group form-row">
+            <label for="newItem_Name">YOUR EMAIL:</label>
+            <input type="email" class="form-control" id="newItem_UserEmail" name="newItem_UserEmail" readonly />
+          </div>
+          <div class="form-group form-row">
+            <button id="btn_SubmitNewItem" class="btn btn-outline-success mt-3 mr-2">SUBMIT NEW ITEM</button>
+            <button id="btn_Cancel3" class="btn btn-outline-danger mt-3 ml-2">CANCEL</button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  <!-- These are required for bootstrap JS/CSS dependencies-->
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+  <!-- These are required for bootstrap JS/CSS dependencies-->
+
+  <script>
+    function getS3Image(url) {
+      var params = {
+        Bucket: "thatteamproject2imagesbucket",
+        Key: url,
+      };
+
+      const albumBucketName = "thatteamproject2imagesbucket";
+      AWS.config.region = "us-east-2"; // Region
+      AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: "us-east-2:6e651cc5-c8ce-41f5-a60d-58696a4c6848",
+      });
+      // AWS.config.update({
+      //   accessKeyId: "AKIAWUQFFTEUEOHBVH4L",
+      //   secretAccessKey: "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",
+      //   region: "us-east-2",
+      // });
+      var s3 = new AWS.S3({
+        apiVersion: "2006-03-01",
+        params: { Bucket: albumBucketName },
+      });
+
+      //get URL of image to put into html img element
+      s3.getSignedUrl("getObject", params, function (err, url) {
+        if (url) {
+          console.log("Your generated pre-signed URL is", url);
+          var photo = "<img style='width:128px;height:128px;' src='" + url + "'/>";
+          document.getElementById("cont_s3Img").innerHTML += photo;
+        }
+        if (err) {
+          console.log("ERROR RETRIEVIGN FROM S3 BUCKET - USING PLACEHOLDER IMAGE");
+          var photo = "<img style='width:128px;height:128px;' src='https://thatteamproject2imagesbucket.s3.us-east-2.amazonaws.com/imgUnknown.jpg'/>";
+          document.getElementById("cont_s3Img").innerHTML += photo;
+        }
+      });
+    }
+
+    function putS3Image() {
+      var albumBucketName = "thatteamproject2imagesbucket";
+      var bucketRegion = "us-east-2";
+      var IdentityPoolId = "us-east-2:6e651cc5-c8ce-41f5-a60d-58696a4c6848";
+      var albumName = "";
+
+      AWS.config.update({
+        region: bucketRegion,
+        credentials: new AWS.CognitoIdentityCredentials({
+          IdentityPoolId: IdentityPoolId,
+        }),
+      });
+
+      var s3 = new AWS.S3({
+        apiVersion: "2006-03-01",
+        params: { Bucket: albumBucketName },
+      });
+
+      //begin upload
+      var files = document.getElementById("newItem_ImgUrl").files;
+      if (!files.length) {
+        return;
+        // alert("Please choose a file to upload first.");
+      }
+      var file = files[0];
+      var fileName = file.name;
+      var params = {
+        Body: file,
+        Bucket: albumBucketName,
+        Key: fileName,
+        ACL: "public-read", //makes object readable
+      };
+      s3.putObject(params, function (err, data) {
+        if (err) {
+          console.log(err, err.stack);
+          // alert("AN ERROR OCCURED");
+        }
+        // an error occurred
+        else {
+          console.log(data); // successful response
+          // alert("UPLOAD SUCCESS!");
+        }
+      });
+    }
+
+    //SUBMIT REVIEW BUTTON PRESSED - CALL SERVLET & HANDLE LOGIC
+    function call_RemoveGeoCacheItem() {
+      let xhttp = new XMLHttpRequest();
+      let params = "geocacheID=" + cacheid + "&email=" + userEmail + "&comment=" + reviewComment + "&rating=" + ratingSelected;
+      xhttp.onreadystatechange = function () {
+        if (this.status == 200) {
+          call_InsertGeoCacheItem();
+        } else {
+          alert("Error with database transaction.");
+          closeWindow();
+        }
+      };
+      xhttp.open("PUT", "ThatTeam_GeoCache/removeitem", true);
+      xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhttp.send(params);
+    }
+
+    function call_InsertGeoCacheItem() {
+      let xhttp = new XMLHttpRequest();
+      let params =
+        "geocacheID=" +
+        cacheid +
+        "&email=" +
+        userEmail +
+        "&comment=" +
+        reviewComment +
+        "&rating=" +
+        ratingSelected +
+        "&imageurl=" +
+        newItem_ImgUrl +
+        "&itemName=" +
+        newItemName +
+        "&description=" +
+        newItem_Description;
+      xhttp.onreadystatechange = function () {
+        if (this.status == 200) {
+          putS3Image();
+        } else {
+          alert("Error with database transaction.");
+          closeWindow();
+        }
+      };
+      xhttp.open("PUT", "ThatTeam_GeoCache/placeitem", true);
+      xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhttp.send(params);
+    }
+
+    $(document).ready(function () {
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      userEmail = getCookie("userEmail");
+      imgurl = urlParams.get("imgurl");
+      cacheid = urlParams.get("cacheid");
+      getS3Image(imgurl);
+
+      //POPULATE FORM READONLYS
+      document.getElementById("newItem_UserEmail").value = userEmail;
+
+      //CANCEL BUTTONS SHOULD CLOSE THIS POPUP WINDOW
+      document.getElementById("btn_Cancel1").addEventListener("click", function (e) {
+        e.preventDefault();
+        closeWindow();
+      });
+      document.getElementById("btn_Cancel2").addEventListener("click", function (e) {
+        e.preventDefault();
+        closeWindow();
+      });
+      document.getElementById("btn_Cancel3").addEventListener("click", function (e) {
+        e.preventDefault();
+        closeWindow();
+      });
+
+      //SUBMIT NEWITEM BUTTON PRESSED - CALL SERVLET & HANDLE LOGIC
+      document.getElementById("btn_SubmitNewItem").addEventListener("click", function (e) {
+        e.preventDefault();
+        document.getElementById("btn_SubmitNewItem").setAttribute("disabled", "disabled");
+        call_RemoveGeoCacheItem();
+      });
+
+      //SUBMIT REVIEW BUTTON PRESSED - HIDE FORM & MOVE TO NEWITEM WIZARD
+      document.getElementById("btn_SubmitReview").addEventListener("click", function (e) {
+        e.preventDefault();
+        document.getElementById("btn_SubmitReview").setAttribute("disabled", "disabled");
+        document.getElementById("cont_Review").style.display = "none";
+        document.getElementById("cont_NewItem").style.display = "block";
+
+        //cache the comment from user input for transaction later
+        reviewComment = document.getElementById("ratingComment").value;
+      });
+
+      //BEGIN SWAPPING ITEM - PRESSED.  Move to begin process for DBase transaction
+      document.getElementById("btn_BeginSwap").addEventListener("click", function (e) {
+        e.preventDefault();
+        document.getElementById("cont_InfoForm").style.display = "block";
+        document.getElementById("cont_Buttons").style.display = "none";
+      });
+
+      //RATING SLIDER
+      const $valueSpan = document.getElementById("valueSpan");
+      $valueSpan.innerHTML = document.getElementById("rating").value;
+      document.getElementById("rating").addEventListener("change", function (e) {
+        $valueSpan.innerText = e.target.value;
+        ratingSelected = e.target.value;
+      });
+    });
+
+    // <-------------    GLOBAL VARS    ------------------->
+    //REVIEW INFORMATION
+    let ratingSelected = 0;
+    let reviewComment = "";
+
+    //NewItemWizard form stuff
+    let newItemName = "";
+    let newItem_Description = "";
+    let newItem_ImgUrl = "";
+
+    //URL PARAMS PASSED IN
+    let userEmail = "";
+    let imgurl = "";
+    let cacheid = -1;
+
+    document.getElementById("newItem_ImgUrl").addEventListener("change", function (e) {
+      // alert(this.files.length);
+      if (this.files.length > 0) {
+        for (const file of this.files) {
+          // document.getElementById("imgURL").value = file.name;
+          newItem_ImgUrl = file.name;
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
